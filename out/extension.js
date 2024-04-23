@@ -37,6 +37,33 @@ function activate(context) {
     // register tree view data
     const fileTreeProvider = new file_tree_provider_1.FileTreeProvider(rootPath);
     vscode.window.registerTreeDataProvider("notepad", fileTreeProvider);
+    context.subscriptions.push(vscode.commands.registerCommand("notepad.openFile", (uri) => {
+        vscode.workspace.openTextDocument(uri).then((doc) => {
+            vscode.window.showTextDocument(doc);
+        });
+    }));
+    const createTsFile = function (fileName, targetFolder) {
+        if (!fileName)
+            return;
+        const filePath = `${targetFolder ?? rootPath}/${fileName}.ts`;
+        vscode.workspace.fs
+            .writeFile(vscode.Uri.file(filePath), new Uint8Array())
+            .then(() => {
+            fileTreeProvider.refresh();
+        });
+    };
+    context.subscriptions.push(vscode.commands.registerCommand("notepad.createFileTs", () => {
+        const focusedItemUri = vscode.window.activeTextEditor?.document.uri;
+        const targetPath = focusedItemUri?.fsPath;
+        const targetFolder = targetPath?.split("\\").slice(0, -1).join("\\");
+        vscode.window
+            .showInputBox({ prompt: "Enter file name" })
+            .then((fileName) => {
+            if (!fileName)
+                return;
+            createTsFile(fileName, targetFolder);
+        });
+    }));
 }
 exports.activate = activate;
 // This method is called when your extension is deactivated

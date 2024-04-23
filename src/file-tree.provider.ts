@@ -63,6 +63,13 @@ export class FileTreeProvider implements vscode.TreeDataProvider<FileItem> {
 
   // render tree item from the data
   getTreeItem(element: FileItem): vscode.TreeItem | Thenable<vscode.TreeItem> {
+    if (!element.isDirectory) {
+      element.command = {
+        command: "notepad.openFile",
+        title: "Open File",
+        arguments: [element.resourceUri],
+      };
+    }
     return element;
   }
 
@@ -76,26 +83,37 @@ export class FileTreeProvider implements vscode.TreeDataProvider<FileItem> {
     if (!element) {
       return Promise.resolve(this.getChildrenByPath(this.rootPath));
     }
-    console.log(element);
     return Promise.resolve(this.getChildrenByPath(element.resourceUri?.fsPath));
   }
 
   getChildrenByPath(pathFile?: string): FileItem[] {
     if (!pathFile || !this.pathExists(pathFile)) return [];
-    return fs.readdirSync(pathFile).map((fileName) => {
-      const filePath = path.join(pathFile, fileName);
-      const stats = fs.statSync(filePath);
-      const isDirectory = stats.isDirectory();
-      const uri = vscode.Uri.file(filePath);
-      return new FileItem(
-        fileName,
-        isDirectory
-          ? vscode.TreeItemCollapsibleState.Collapsed
-          : vscode.TreeItemCollapsibleState.None,
-        isDirectory,
-        uri
-      );
-    });
+    return fs
+      .readdirSync(pathFile)
+      .map((fileName) => {
+        const filePath = path.join(pathFile, fileName);
+        const stats = fs.statSync(filePath);
+        const isDirectory = stats.isDirectory();
+        const uri = vscode.Uri.file(filePath);
+        return new FileItem(
+          fileName,
+          isDirectory
+            ? vscode.TreeItemCollapsibleState.Collapsed
+            : vscode.TreeItemCollapsibleState.None,
+          isDirectory,
+          uri
+        );
+      })
+      .sort((a, b) => {
+        if (
+          a.isDirectory === b.isDirectory &&
+          typeof a.label === "string" &&
+          typeof b.label === "string"
+        ) {
+          return a.label.localeCompare(b.label);
+        }
+        return a.isDirectory ? -1 : 1;
+      });
   }
 
   pathExists(p: string): boolean {

@@ -74,6 +74,13 @@ class FileTreeProvider {
     }
     // render tree item from the data
     getTreeItem(element) {
+        if (!element.isDirectory) {
+            element.command = {
+                command: "notepad.openFile",
+                title: "Open File",
+                arguments: [element.resourceUri],
+            };
+        }
         return element;
     }
     getChildren(element) {
@@ -84,13 +91,14 @@ class FileTreeProvider {
         if (!element) {
             return Promise.resolve(this.getChildrenByPath(this.rootPath));
         }
-        console.log(element);
         return Promise.resolve(this.getChildrenByPath(element.resourceUri?.fsPath));
     }
     getChildrenByPath(pathFile) {
         if (!pathFile || !this.pathExists(pathFile))
             return [];
-        return fs.readdirSync(pathFile).map((fileName) => {
+        return fs
+            .readdirSync(pathFile)
+            .map((fileName) => {
             const filePath = path.join(pathFile, fileName);
             const stats = fs.statSync(filePath);
             const isDirectory = stats.isDirectory();
@@ -98,6 +106,14 @@ class FileTreeProvider {
             return new FileItem(fileName, isDirectory
                 ? vscode.TreeItemCollapsibleState.Collapsed
                 : vscode.TreeItemCollapsibleState.None, isDirectory, uri);
+        })
+            .sort((a, b) => {
+            if (a.isDirectory === b.isDirectory &&
+                typeof a.label === "string" &&
+                typeof b.label === "string") {
+                return a.label.localeCompare(b.label);
+            }
+            return a.isDirectory ? -1 : 1;
         });
     }
     pathExists(p) {

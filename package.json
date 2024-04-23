@@ -14,7 +14,13 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
-    "commands": [],
+    "commands": [
+      {
+        "command": "notepad.createFileTs",
+        "title": "Create File Typescript",
+        "icon": "resources/icons/plus.svg"
+      }
+    ],
     "viewsContainers": {
       "activitybar": [
         {
@@ -31,6 +37,15 @@
           "name": "Notepad",
           "icon": "resources/icons/document.svg",
           "contextualTitle": "File List Notepad"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "notepad.createFileTs",
+          "when": "view == notepad",
+          "group": "navigation"
         }
       ]
     }
